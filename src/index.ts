@@ -65,32 +65,38 @@ class SheetConnection {
    * @param  {typeofAbstractModel[]} ...models
    */
   async validateModels() {
-    await Promise.all(
-      global.models.map(async model => {
-        let workSheetId = SheetConnection.getWorksheetID(model);
-        let colMeta = SheetConnection.getModelCollumns(model);
-
-        let cols = await this.designer.getCollumns(workSheetId);
-        let match = colMeta.every(item => cols.includes(item)) && colMeta.length === cols.length;
-
-        if (!match) {
-          if (this.config.migrate === 'drop') {
-            this.logger.warn(
-              `Collumns ${cols.join(', ')} didnt match model ${colMeta.join(', ')} so the table was wiped.`,
-            );
-            await this.designer.clearWorksheet(workSheetId);
-            await this.designer.setCollumns(workSheetId, colMeta);
-          } else {
-            this.logger.warn(
-              'Model and table do not fit each other. You might want to consider backing up data and changing migrate to "drop"!',
-            );
-          }
-        } else {
-          this.logger.info('Model and table fits each other');
-        }
-      }),
-    );
+    await Promise.all(global.models.map(this.validateModel));
   }
+
+  /**
+   * Validates passed model
+   * @param  {typeofAbstractModel} model
+   * @returns Promise<boolean>
+   */
+  async validateModel(model: typeof AbstractModel): Promise<boolean> {
+    let workSheetId = SheetConnection.getWorksheetID(model);
+    let colMeta = SheetConnection.getModelCollumns(model);
+
+    let cols = await this.designer.getCollumns(workSheetId);
+    let match = colMeta.every(item => cols.includes(item)) && colMeta.length === cols.length;
+
+    if (!match) {
+      if (this.config.migrate === 'drop') {
+        this.logger.warn(`Collumns ${cols.join(', ')} didnt match model ${colMeta.join(', ')} so the table was wiped.`);
+        await this.designer.clearWorksheet(workSheetId);
+        await this.designer.setCollumns(workSheetId, colMeta);
+      } else {
+        this.logger.warn(
+          'Model and table do not fit each other. You might want to consider backing up data and changing migrate to "drop"!',
+        );
+      }
+    } else {
+      this.logger.info('Model and table fits each other');
+    }
+
+    return match;
+  }
+
   /**
    * Writes specific infot to database to its position marked by rowId
    * @param  {T} info
