@@ -12,16 +12,6 @@ import { WhereCondition } from './interfaces/WhereCondition';
 import { SchemaColumns, column } from './decorators/column';
 import { worksheet } from './decorators/worksheet';
 
-/* eslint-disable */
-declare global {
-  namespace NodeJS {
-    interface Global {
-      models: (typeof AbstractModel)[];
-    }
-  }
-}
-/* eslint-enable */
-
 // Singleton
 let initialzed = false;
 
@@ -35,7 +25,6 @@ class SheetConnection {
    * @param  {Logger} protectedlogger
    */
   private constructor(config: Config) {
-    global.models = global.models || [];
     if (initialzed && !config.disableSingleton) throw new Error('SheetConnection can be used as singleton only!');
     this.config = Object.assign({}, config);
     this.logger = this.config.logger ? this.config.logger : console;
@@ -61,12 +50,14 @@ class SheetConnection {
     return instance;
   }
 
+  models: typeof AbstractModel[] = [];
+
   /**
    * Validates and synces models properties with table collumns
    * @param  {typeofAbstractModel[]} ...models
    */
   async validateModels() {
-    await Promise.all(global.models.map(this.validateModel));
+    await Promise.all(this.models.map(this.validateModel));
   }
 
   /**
