@@ -35,6 +35,7 @@ class SheetConnection {
    * @param  {Logger} protectedlogger
    */
   private constructor(config: Config) {
+    global.models = global.models || [];
     if (initialzed && !config.disableSingleton) throw new Error('SheetConnection can be used as singleton only!');
     this.config = Object.assign({}, config);
     this.logger = this.config.logger ? this.config.logger : console;
