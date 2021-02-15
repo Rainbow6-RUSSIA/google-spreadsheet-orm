@@ -1,6 +1,10 @@
 import { ParsedRow } from './interfaces/ParsedRow';
-import SheetConnection from './';
+import SheetConnection, { Config } from './';
 import { WhereCondition } from './interfaces/WhereCondition';
+import { AbstractModel } from './models/AbstractModel';
+import { worksheet } from './decorators/worksheet';
+import { Auth } from 'googleapis';
+import { column } from './decorators/column';
 const clearModule = require('clear-module');
 
 const mockParsedRows: ParsedRow[] = [
@@ -29,7 +33,7 @@ const mockParsedRowsMultiline: ParsedRow[] = [
 ];
 
 const mockWhere: WhereCondition = {
-  name: (val: string) => val === 'John Doe',
+  name: (val: string | number) => val === 'John Doe',
   url: 'www.atlas.cz',
   age: '8',
 };
@@ -70,3 +74,40 @@ describe('parseRowsFromMetaFilter', () => {
     expect(output).toMatchSnapshot();
   });
 });
+
+describe('readAndWrite', () => {
+  @worksheet(2088806053)
+  class Model extends AbstractModel {
+    @column
+    id: string
+    @column
+    string: string
+  }
+
+  const authClient = new Auth.OAuth2Client()
+  authClient.setCredentials({ access_token: '<censored>' })
+  let connection: SheetConnection
+  const str = Math.random().toString()
+  
+  beforeAll(async () => {
+    connection = await SheetConnection.connect({ spreadsheetId: '11CF9K9biUAHy_3ZqcOm0I-EPgl22jdM2g5YT-j3Q1NU', migrate: 'drop', authClient, disableSingleton: true } as Config)
+    await connection.dropModel(Model)
+  })
+
+  test('It should successfully validates', async () => {
+    expect(await connection.validateModel(Model)).not.toBeFalsy()
+  })
+  test('It should successfully write', async () => {
+    const m = new Model();
+    m.id = 'test'
+    m.string = str
+    console.log(await connection.setInfo(m))
+  })
+  test('It should successfully read', async () => {
+    const m = await connection.getInfos(Model)
+    expect(m).toMatchObject([{
+      id: 'test',
+      string: str
+    }])
+  })
+})

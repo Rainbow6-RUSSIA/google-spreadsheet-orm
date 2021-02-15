@@ -20,8 +20,8 @@
 		"no-unused-vars": "off",
 		"no-useless-constructor":"off",
 		"no-dupe-class-members": "off",
-		"no-console": "warn",
-		"camelcase": "warn",
+		"no-console": "off",
+		"camelcase": "off",
 		"@typescript-eslint/no-unused-vars": "error",
 		"@typescript-eslint/no-array-constructor": "error",
 		"@typescript-eslint/adjacent-overload-signatures": "error"

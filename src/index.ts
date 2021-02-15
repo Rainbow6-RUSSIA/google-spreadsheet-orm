@@ -75,8 +75,7 @@ class SheetConnection {
     if (!match) {
       if (this.config.migrate === 'drop') {
         this.logger.warn(`Collumns ${cols.join(', ')} didnt match model ${colMeta.join(', ')} so the table was wiped.`);
-        await this.designer.clearWorksheet(workSheetId);
-        await this.designer.setCollumns(workSheetId, colMeta);
+        await this.dropModel(model)
       } else {
         this.logger.warn(
           'Model and table do not fit each other. You might want to consider backing up data and changing migrate to "drop"!',
@@ -87,6 +86,14 @@ class SheetConnection {
     }
 
     return match;
+  }
+
+  async dropModel(model: typeof AbstractModel) {
+    let workSheetId = SheetConnection.getWorksheetID(model);
+    let colMeta = SheetConnection.getModelCollumns(model);
+
+    await this.designer.clearWorksheet(workSheetId);
+    await this.designer.setCollumns(workSheetId, colMeta);
   }
 
   /**
